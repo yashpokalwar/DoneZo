@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import illustration from "./assets/vector1.svg" 
+import illustration from "./assets/vector1.svg";
+import HomePage from "./homepage"; // Make sure this path is correct
 
-const AuthPage = () => {
+const App = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -15,18 +17,28 @@ const AuthPage = () => {
     e.preventDefault();
     if (isLogin) {
       console.log('Logging in with:', { username, password });
+      // Simulate successful login
+      setIsAuthenticated(true);
     } else {
       console.log('Signing up with:', { username, email, password });
+      // Simulate successful registration and login
+      setIsAuthenticated(true);
     }
   };
 
+  // If user is authenticated, show HomePage
+  if (isAuthenticated) {
+    return <HomePage />;
+  }
+
+  // Otherwise show AuthPage
   return (
     <div className="flex min-h-screen bg-blue-100">
       <div className="flex flex-col md:flex-row m-auto bg-white rounded-lg shadow-lg overflow-hidden max-w-4xl w-full">
         
         {/* Left side with SVG Illustration */}
         <div className="w-full md:w-1/2 bg-blue-50 flex flex-col items-center justify-center p-12">
-          <img src={illustration} alt="Illustration" className="w-64" /> {/* ✅ SVG Imported Here */}
+          <img src={illustration} alt="Illustration" className="w-64" />
           <h2 className="mt-6 text-2xl font-bold text-gray-700">{isLogin ? 'Welcome Back!' : 'Join Us Today!'}</h2>
           <p className="mt-2 text-gray-600">
             {isLogin 
@@ -101,4 +113,4 @@ const AuthPage = () => {
   );
 };
 
-export default AuthPage;
+export default App;
