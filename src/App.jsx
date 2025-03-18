@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import illustration from "./assets/vector1.svg";
-import LoginPage from "./components/loginpage"; // Fixed incorrect import
-import Home from "./components/homepage"; // Import Home Page for task management// Import Language Context
-
+import Home from "./components/homepage";
+import axios from "axios";
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -11,61 +10,100 @@ const App = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
+  const [message, setMessage] = useState({ text: "", type: "" });
 
   const toggleAuthMode = () => {
     setIsLogin(!isLogin);
+    setMessage({ text: "", type: "" });
   };
 
-  const handleLogin = (user) => {
-    setUser(user);
-    setIsAuthenticated(true);
+  const handleAuth = async (e) => {
+    e.preventDefault();
+    setMessage({ text: "", type: "" });
+
+    try {
+      if (isLogin) {
+        console.log("Attempting login with:", { username, password });
+
+        const response = await axios.post(
+          "http://localhost:3001/api/login",
+          { username, password },
+          { withCredentials: true }
+        );
+
+        console.log("Login response:", response.data);
+
+        if (response.data.token) {
+          setUser(response.data.user);
+          setIsAuthenticated(true);
+          localStorage.setItem("userId", response.data.user.id);
+          setMessage({ text: "Login successful!", type: "success" });
+          console.log("User authenticated:", response.data.user);
+        } else {
+          setMessage({ text: response.data.message, type: "error" });
+          console.error("Login error:", response.data.message);
+        }
+      } else {
+        console.log("Attempting registration with:", { username, email, password });
+
+        const response = await axios.post("http://localhost:3001/api/register", { username, email, password });
+
+        console.log("Registration response:", response.data);
+
+        if (response.data.success) {
+          setMessage({ text: "Registration successful! Please log in.", type: "success" });
+          setTimeout(() => setIsLogin(true), 1500);
+        } else {
+          setMessage({ text: response.data.message, type: "error" });
+          console.error("Registration error:", response.data.message);
+        }
+      }
+    } catch (error) {
+      console.error("API error:", error);
+      setMessage({ text: "An error occurred. Please try again.", type: "error" });
+    }
   };
 
   const handleLogout = () => {
+    console.log("Logging out...");
     setIsAuthenticated(false);
+    localStorage.removeItem("userId");
     setUser(null);
   };
 
   if (isAuthenticated) {
-
     return <Home user={user} onLogout={handleLogout} />;
   }
 
   return (
-
     <div className="flex min-h-screen bg-blue-100">
       <div className="flex flex-col md:flex-row m-auto bg-white rounded-lg shadow-lg overflow-hidden max-w-4xl w-full">
-        
-        {/* Left side with SVG Illustration */}
         <div className="w-full md:w-1/2 bg-blue-50 flex flex-col items-center justify-center p-12">
           <img src={illustration} alt="Illustration" className="w-64" />
           <h2 className="mt-6 text-2xl font-bold text-gray-700">
             {isLogin ? "Welcome Back!" : "Join Us Today!"}
           </h2>
           <p className="mt-2 text-gray-600">
-            {isLogin
-              ? "We're glad to see you again!"
-              : "Create an account to get started."}
+            {isLogin ? "We're glad to see you again!" : "Create an account to get started."}
           </p>
         </div>
-        
-        {/* Right side with form */}
+
         <div className="w-full md:w-1/2 py-16 px-12">
           <h2 className="text-3xl mb-4 font-bold text-gray-800">
             {isLogin ? "Log In" : "Sign Up"}
           </h2>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (isLogin) {
-                console.log("Logging in with:", { username, password });
-                handleLogin({ username });
-              } else {
-                console.log("Signing up with:", { username, email, password });
-                handleLogin({ username });
-              }
-            }}
-          >
+
+          {message.text && (
+            <div
+              className={`p-3 mb-4 rounded text-sm ${
+                message.type === "success" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+              }`}
+            >
+              {message.text}
+            </div>
+          )}
+
+          <form onSubmit={handleAuth}>
             <div className="mt-5">
               <input
                 type="text"
@@ -114,10 +152,7 @@ const App = () => {
           <div className="mt-6 text-center">
             <p>
               {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <button
-                onClick={toggleAuthMode}
-                className="text-blue-600 hover:underline font-medium"
-              >
+              <button onClick={toggleAuthMode} className="text-blue-600 hover:underline font-medium">
                 {isLogin ? "Sign Up" : "Log In"}
               </button>
             </p>
